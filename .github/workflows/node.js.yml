@@ -11,43 +11,30 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        node-version: [14.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        node-version: [20]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install
 
-        steps:
-          - name: Checkout
-            uses: actions/checkout@v4
+      - run: pnpm ci
+      - run: pnpm run build
+      - run: pnpm run export
 
-          - name: Install pnpm
-            uses: pnpm/action-setup@v4
-            with:
-              version: 8
-              run_install: false
-
-          - name: Install Node.js
-            uses: actions/setup-node@v4
-            with:
-              node-version: 20
-              cache: "pnpm"
-
-          - name: Get pnpm store directory
-            shell: bash
-            run: |
-              echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-          - name: Install dependencies
-            run: pnpm install
-
-          - run: pnpm ci
-          - run: pnpm run build
-          - run: pnpm run export
-
-          - name: Deploy 🚀
-            uses: JamesIves/github-pages-deploy-action@v4.2.5
-            with:
-              branch: gh-pages
-              folder: out
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4.2.5
+        with:
+          branch: gh-pages
+          folder: out
